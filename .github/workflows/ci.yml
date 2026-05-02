@@ -35,3 +35,10 @@ jobs:
         run: pytest tests/ --cov=codelens --cov-report=term-missing
         env:
           NIM_API_KEY: dummy_key_for_tests
+
+      - name: Check Attribution
+        run: |
+          pip install pip-licenses
+          pip-licenses --format=markdown > ATTRIBUTION_CHECK.md
+          # This is a soft check for now to ensure the file exists
+          ls ATTRIBUTION.md
