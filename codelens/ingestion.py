@@ -37,3 +37,38 @@ def _clone_repo(url: str) -> str:
         return os.path.abspath(target_path)
     except Exception as e:
         raise RuntimeError(f"Failed to clone repository: {str(e)}")
+
+def _discover_files(root: str) -> list[str]:
+    """
+    Walks the directory and returns absolute paths to all .py files,
+    excluding those in IGNORED_DIRS or matching IGNORED_FILES/PREFIXES.
+    
+    Args:
+        root: The root directory to scan.
+    Returns:
+        List of absolute paths to filtered .py files.
+    """
+    py_files = []
+    
+    for dirpath, dirnames, filenames in os.walk(root):
+        # 1. Filter out ignored directories in-place to prevent os.walk from entering them
+        dirnames[:] = [d for d in dirnames if d not in config.IGNORED_DIRS]
+        
+        for filename in filenames:
+            # 2. Check if it's a .py file
+            if not filename.endswith(".py"):
+                continue
+            
+            # 3. Check if file is in IGNORED_FILES
+            if filename in config.IGNORED_FILES:
+                continue
+            
+            # 4. Check if file matches IGNORED_PREFIXES
+            if any(filename.startswith(prefix) for prefix in config.IGNORED_PREFIXES):
+                continue
+            
+            # 5. Add valid file to list
+            full_path = os.path.join(dirpath, filename)
+            py_files.append(os.path.abspath(full_path))
+            
+    return py_files
