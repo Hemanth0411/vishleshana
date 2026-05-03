@@ -12,6 +12,34 @@ import time
 from git import Repo
 from codelens import config
 
+def ingest(source: str) -> list[str]:
+    """
+    Accepts a GitHub URL or local directory path.
+    Clones (if remote) and returns a filtered list of .py file paths.
+    
+    Args:
+        source: GitHub URL (https://github.com/...) or absolute local path.
+    Returns:
+        List of absolute paths to .py files, filtered per config.
+    Raises:
+        ValueError: If source is invalid or path does not exist.
+        RuntimeError: If cloning fails.
+    """
+    if source.startswith("http"):
+        # It's a URL, clone it first
+        work_dir = _clone_repo(source)
+    else:
+        # It's a local path, verify it exists
+        if not os.path.isabs(source):
+            # Try to make it absolute if it's relative to current dir
+            source = os.path.abspath(source)
+            
+        if not os.path.isdir(source):
+            raise ValueError(f"Source path does not exist or is not a directory: {source}")
+        work_dir = source
+        
+    return _discover_files(work_dir)
+
 def _clone_repo(url: str) -> str:
     """
     Clones a remote GitHub repository to a timestamped subdirectory in TEMP_DIR.
