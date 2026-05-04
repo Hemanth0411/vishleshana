@@ -12,6 +12,32 @@ Dependencies: networkx
 import networkx as nx
 
 
+def analyze(file_graph: nx.DiGraph) -> dict:
+    """
+    Performs structural analysis on the file graph.
+
+    Args:
+        file_graph: networkx DiGraph of file dependencies.
+    Returns:
+        Dictionary containing entry points, critical modules, and reading order.
+    """
+    has_cycles = not nx.is_directed_acyclic_graph(file_graph)
+    cycle_nodes = []
+    if has_cycles:
+        try:
+            cycle_nodes = list(nx.find_cycle(file_graph))
+        except:
+            pass
+
+    return {
+        "entry_points": _detect_entry_points(file_graph),
+        "critical_modules": _detect_critical_modules(file_graph),
+        "reading_order": _compute_reading_order(file_graph),
+        "has_cycles": has_cycles,
+        "cycle_nodes": [str(node) for node in cycle_nodes],
+    }
+
+
 def _detect_entry_points(file_graph: nx.DiGraph) -> list[str]:
     """
     Identifies entry points in the codebase.
@@ -69,11 +95,14 @@ def _compute_reading_order(file_graph: nx.DiGraph) -> list[str]:
     try:
         # Check if we can do a standard topological sort (only works on DAGs)
         if nx.is_directed_acyclic_graph(file_graph):
-            return list(nx.topological_sort(file_graph))
+            # Reverse it so dependencies (A) come before users (B)
+            order = list(nx.topological_sort(file_graph))
+            order.reverse()
+            return order
         else:
             # If there are circular imports, fall back to sorting by in-degree
-            # Files with fewer things depending on them come first
-            sorted_nodes = sorted(file_graph.in_degree(), key=lambda x: x[1])
+            # Files with fewer things depending on them come first (highest in-degree at the end)
+            sorted_nodes = sorted(file_graph.in_degree(), key=lambda x: x[1], reverse=True)
             return [node for node, degree in sorted_nodes]
     except Exception as e:
         print(f"Warning: Topological sort failed, falling back to alphabetical: {e}")
