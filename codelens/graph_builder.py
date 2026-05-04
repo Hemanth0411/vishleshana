@@ -68,14 +68,16 @@ def _resolve_import(module_name: str, all_file_paths: list[str]) -> str | None:
     if not module_name:
         return None
 
-    # Convert dots to path separators
-    module_path_part = module_name.replace(".", os.sep)
+    # Convert dots to path separators and normalize
+    module_path_part = os.path.normpath(module_name.replace(".", os.sep))
 
     for path in all_file_paths:
-        # Check if the file path ends with the module name + .py
-        # e.g., if path is '.../codelens/config.py' and module is 'codelens.config'
-        if path.endswith(module_path_part + ".py") or path.endswith(
-            module_path_part + os.sep + "__init__.py"
+        # Normalize the project path we are checking
+        norm_path = os.path.normpath(path)
+        
+        # Check if it ends with the module name + .py
+        if norm_path.endswith(module_path_part + ".py") or norm_path.endswith(
+            os.path.join(module_path_part, "__init__.py")
         ):
             return path
 
