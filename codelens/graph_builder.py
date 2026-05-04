@@ -12,6 +12,21 @@ import networkx as nx
 import os
 
 
+def build_graphs(parsed_data: dict) -> dict:
+    """
+    Builds both file and function graphs from parsed data.
+
+    Args:
+        parsed_data: Output of parser.parse_files()
+    Returns:
+        Dictionary containing 'file_graph' and 'call_graph'.
+    """
+    return {
+        "file_graph": _build_file_graph(parsed_data),
+        "call_graph": _build_call_graph(parsed_data),
+    }
+
+
 def _build_file_graph(parsed_data: dict) -> nx.DiGraph:
     """
     Creates a directed graph where nodes are files and edges are imports.
