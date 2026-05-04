@@ -50,3 +50,31 @@ def _detect_critical_modules(file_graph: nx.DiGraph, top_n: int = 3) -> list[str
     sorted_centrality = sorted(centrality.items(), key=lambda x: x[1], reverse=True)
 
     return [node for node, score in sorted_centrality[:top_n] if score > 0]
+
+
+def _compute_reading_order(file_graph: nx.DiGraph) -> list[str]:
+    """
+    Computes a recommended reading order for the codebase.
+    Uses topological sort (dependencies first).
+    Handles circular imports by falling back to in-degree sorting.
+
+    Args:
+        file_graph: networkx DiGraph of file dependencies.
+    Returns:
+        Ordered list of file paths.
+    """
+    if not file_graph.nodes:
+        return []
+
+    try:
+        # Check if we can do a standard topological sort (only works on DAGs)
+        if nx.is_directed_acyclic_graph(file_graph):
+            return list(nx.topological_sort(file_graph))
+        else:
+            # If there are circular imports, fall back to sorting by in-degree
+            # Files with fewer things depending on them come first
+            sorted_nodes = sorted(file_graph.in_degree(), key=lambda x: x[1])
+            return [node for node, degree in sorted_nodes]
+    except Exception as e:
+        print(f"Warning: Topological sort failed, falling back to alphabetical: {e}")
+        return sorted(list(file_graph.nodes))
