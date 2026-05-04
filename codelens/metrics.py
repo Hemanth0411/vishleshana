@@ -9,7 +9,44 @@ Dependencies: radon
 """
 
 import radon.complexity as cc
+import networkx as nx
 from codelens import config
+
+def compute_metrics(file_paths: list[str], file_graph: nx.DiGraph) -> nx.DiGraph:
+    """
+    Computes metrics for all files and attaches them to graph nodes.
+    
+    Args:
+        file_paths: List of .py file paths.
+        file_graph: networkx DiGraph from graph_builder.
+    Returns:
+        The graph with added complexity attributes on each node.
+    """
+    for path in file_paths:
+        if path not in file_graph.nodes:
+            continue
+            
+        metrics = _analyze_file(path)
+        if not metrics:
+            continue
+            
+        # Extract complexity values
+        scores = [m["complexity"] for m in metrics]
+        avg_score = sum(scores) / len(scores)
+        max_score = max(scores)
+        
+        # Identify functions above the danger threshold
+        flagged = [m["name"] for m in metrics if m["complexity"] >= config.COMPLEXITY_THRESHOLD]
+        
+        # Attach to graph node
+        file_graph.nodes[path].update({
+            "complexity_avg": round(avg_score, 2),
+            "complexity_max": max_score,
+            "complexity_rank": cc.cc_rank(avg_score),
+            "flagged_functions": flagged
+        })
+        
+    return file_graph
 
 def _analyze_file(path: str) -> list[dict]:
     """
