@@ -9,6 +9,37 @@ Dependencies: ast (stdlib), pyan3
 
 import ast
 import os
+import pyan
+
+def _build_call_edges(file_paths: list[str]) -> list[tuple[str, str]]:
+    """
+    Uses pyan3 to find function-level call edges across multiple files.
+    
+    Args:
+        file_paths: List of absolute paths to .py files.
+    Returns:
+        List of (caller_name, callee_name) tuples.
+    """
+    try:
+        # pyan3 uses its own internal visitor to build the call graph
+        # draw_defines=False prevents it from adding 'definition' edges
+        # draw_uses=True ensures it captures 'call' edges
+        visitor = pyan.create_callgraph(
+            filenames=file_paths,
+            draw_defines=False,
+            draw_uses=True
+        )
+        
+        edges = []
+        # Extract edges from the pyan visitor object
+        # Pyan edges are objects with 'source' and 'dest' attributes
+        for edge in visitor.edges:
+            edges.append((str(edge.source), str(edge.dest)))
+            
+        return edges
+    except Exception as e:
+        print(f"Warning: pyan3 failed to build call edges: {e}")
+        return []
 
 
 def _parse_single_file(path: str) -> dict:
