@@ -8,7 +8,6 @@ Dependencies: ast (stdlib), pyan3
 """
 
 import ast
-import os
 import pyan
 
 

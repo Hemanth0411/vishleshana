@@ -26,7 +26,7 @@ def analyze(file_graph: nx.DiGraph) -> dict:
     if has_cycles:
         try:
             cycle_nodes = list(nx.find_cycle(file_graph))
-        except:
+        except Exception:
             pass
 
     return {
@@ -102,7 +102,9 @@ def _compute_reading_order(file_graph: nx.DiGraph) -> list[str]:
         else:
             # If there are circular imports, fall back to sorting by in-degree
             # Files with fewer things depending on them come first (highest in-degree at the end)
-            sorted_nodes = sorted(file_graph.in_degree(), key=lambda x: x[1], reverse=True)
+            sorted_nodes = sorted(
+                file_graph.in_degree(), key=lambda x: x[1], reverse=True
+            )
             return [node for node, degree in sorted_nodes]
     except Exception as e:
         print(f"Warning: Topological sort failed, falling back to alphabetical: {e}")
