@@ -65,3 +65,22 @@ def _resolve_import(module_name: str, all_file_paths: list[str]) -> str | None:
             return path
 
     return None
+
+
+def _build_call_graph(parsed_data: dict) -> nx.DiGraph:
+    """
+    Creates a directed graph where nodes are functions and edges are calls.
+
+    Args:
+        parsed_data: Output of parser.parse_files()
+    Returns:
+        A networkx DiGraph of function calls.
+    """
+    G = nx.DiGraph()
+
+    # Add edges from pyan3 data
+    # Edges are (caller_name, callee_name)
+    for caller, callee in parsed_data["call_edges"]:
+        G.add_edge(caller, callee)
+
+    return G
