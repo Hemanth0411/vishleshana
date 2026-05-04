@@ -33,4 +33,31 @@ def _build_file_graph(parsed_data: dict) -> nx.DiGraph:
             docstring=meta["docstring"] or ""
         )
         
+    # 2. Resolve imports and add edges
+    all_file_paths = list(parsed_data["files"].keys())
+    for path, meta in parsed_data["files"].items():
+        for imp in meta["imports"]:
+            target_path = _resolve_import(imp["module"], all_file_paths)
+            if target_path and target_path != path:
+                G.add_edge(path, target_path)
+                
     return G
+
+def _resolve_import(module_name: str, all_file_paths: list[str]) -> str | None:
+    """
+    Attempts to map a module name (e.g., 'codelens.config') 
+    to an actual file path in the project.
+    """
+    if not module_name:
+        return None
+        
+    # Convert dots to path separators
+    module_path_part = module_name.replace(".", os.sep)
+    
+    for path in all_file_paths:
+        # Check if the file path ends with the module name + .py
+        # e.g., if path is '.../codelens/config.py' and module is 'codelens.config'
+        if path.endswith(module_path_part + ".py") or path.endswith(module_path_part + os.sep + "__init__.py"):
+            return path
+            
+    return None
