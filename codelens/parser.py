@@ -11,10 +11,31 @@ import ast
 import os
 import pyan
 
+
+def parse_files(file_paths: list[str]) -> dict:
+    """
+    Parses multiple .py files and extracts structural metadata and call edges.
+
+    Args:
+        file_paths: List of absolute .py file paths.
+    Returns:
+        Dictionary containing file metadata and inter-file call edges.
+    """
+    results = {"files": {}, "call_edges": _build_call_edges(file_paths)}
+
+    for path in file_paths:
+        try:
+            results["files"][path] = _parse_single_file(path)
+        except Exception as e:
+            print(f"Warning: Failed to parse {path}: {e}")
+
+    return results
+
+
 def _build_call_edges(file_paths: list[str]) -> list[tuple[str, str]]:
     """
     Uses pyan3 to find function-level call edges across multiple files.
-    
+
     Args:
         file_paths: List of absolute paths to .py files.
     Returns:
@@ -25,17 +46,15 @@ def _build_call_edges(file_paths: list[str]) -> list[tuple[str, str]]:
         # draw_defines=False prevents it from adding 'definition' edges
         # draw_uses=True ensures it captures 'call' edges
         visitor = pyan.create_callgraph(
-            filenames=file_paths,
-            draw_defines=False,
-            draw_uses=True
+            filenames=file_paths, draw_defines=False, draw_uses=True
         )
-        
+
         edges = []
         # Extract edges from the pyan visitor object
         # Pyan edges are objects with 'source' and 'dest' attributes
         for edge in visitor.edges:
             edges.append((str(edge.source), str(edge.dest)))
-            
+
         return edges
     except Exception as e:
         print(f"Warning: pyan3 failed to build call edges: {e}")
