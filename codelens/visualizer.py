@@ -8,8 +8,51 @@ Dependencies: pyvis, networkx
 """
 
 import networkx as nx
+import os
+from pyvis.network import Network
 
-def _assign_node_colors(file_graph: nx.DiGraph) -> dict[str, str]:
+def render_graph(file_graph: nx.DiGraph) -> str:
+    """
+    Converts a networkx graph into an interactive Pyvis HTML visualization.
+    
+    Returns:
+        A string containing the full HTML/JS for the visualization.
+    """
+    # Initialize Pyvis Network
+    # notebook=False because we want a standalone HTML string
+    # directed=True for our dependency arrows
+    nt = Network(height="600px", width="100%", directed=True, bgcolor="#ffffff", font_color="#2c3e50")
+    
+    # Assign colors
+    colors = _assign_node_colors(file_graph)
+    
+    # Add Nodes
+    for node, data in file_graph.nodes(data=True):
+        label = data.get("label", os.path.basename(node))
+        
+        # Build tooltip (title)
+        functions = [f["name"] for f in data.get("functions", [])]
+        title = f"File: {label}\n"
+        title += f"Docstring: {data.get('docstring', 'N/A')}\n"
+        title += f"Functions: {', '.join(functions[:5])}{'...' if len(functions)>5 else ''}"
+        
+        nt.add_node(
+            node, 
+            label=label, 
+            color=colors.get(node), 
+            title=title,
+            borderWidth=2
+        )
+        
+    # Add Edges
+    for source, target in file_graph.edges():
+        nt.add_edge(source, target, color="#bdc3c7")
+        
+    # Disable physics for large graphs to prevent "jumping"
+    nt.toggle_physics(True)
+    
+    # Generate the HTML string
+    return nt.generate_html()
     """
     Assigns hex colors to nodes based on their role and complexity.
     
