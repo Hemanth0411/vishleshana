@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from codelens import visualizer, ai_client
 
+
 def render_overview():
     st.header("Project Overview")
     if not st.session_state.analysis_results:
@@ -34,6 +35,7 @@ def render_overview():
         for cm in res["critical_modules"]:
             st.code(os.path.basename(cm))
 
+
 def render_graph():
     st.header("System Architecture")
     if not st.session_state.graph_data:
@@ -43,6 +45,7 @@ def render_graph():
         st.components.v1.html(html_str, height=650, scrolling=True)
         st.caption("Tip: You can zoom, drag nodes, and hover for details.")
 
+
 def render_complexity():
     st.header("Code Complexity")
     if not st.session_state.graph_data:
@@ -51,21 +54,25 @@ def render_complexity():
 
     complexity_data = []
     for node, data in st.session_state.graph_data["file_graph"].nodes(data=True):
-        complexity_data.append({
-            "File": os.path.basename(node),
-            "Avg Complexity": data.get("complexity_avg", 0),
-            "Max Complexity": data.get("complexity_max", 0),
-            "Rank": data.get("complexity_rank", "A"),
-            "Flagged Functions": ", ".join(data.get("flagged_functions", [])) or "None"
-        })
-    
+        complexity_data.append(
+            {
+                "File": os.path.basename(node),
+                "Avg Complexity": data.get("complexity_avg", 0),
+                "Max Complexity": data.get("complexity_max", 0),
+                "Rank": data.get("complexity_rank", "A"),
+                "Flagged Functions": ", ".join(data.get("flagged_functions", []))
+                or "None",
+            }
+        )
+
     df = pd.DataFrame(complexity_data)
     st.dataframe(
         df.sort_values(by="Max Complexity", ascending=False),
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
     )
     st.info("💡 Ranks C, D, E, and F indicate high complexity.")
+
 
 def render_reading_order():
     st.header("Recommended Reading Order")
@@ -78,12 +85,15 @@ def render_reading_order():
     st.write(" → ".join([os.path.basename(f) for f in order]))
     st.divider()
     st.subheader("💡 AI Mentor Explanation")
-    
+
     if "reading_order_explanation" not in st.session_state:
         with st.spinner("Asking AI for explanation..."):
-            st.session_state.reading_order_explanation = ai_client.explain_reading_order(order)
-    
+            st.session_state.reading_order_explanation = (
+                ai_client.explain_reading_order(order)
+            )
+
     st.markdown(st.session_state.reading_order_explanation)
+
 
 def render_chat():
     st.header("Chat with your Code")
@@ -106,3 +116,49 @@ def render_chat():
                 response = ai_client.answer_query(prompt, st.session_state.graph_data)
                 st.markdown(response)
         st.session_state.chat_history.append({"role": "assistant", "content": response})
+
+
+def render_query():
+    st.header("Semantic Query")
+    if not st.session_state.graph_data:
+        st.info("Analysis required for queries.")
+        return
+
+    query = st.text_input(
+        "Search for specific logic or features...",
+        placeholder="e.g. How does the authentication work?",
+    )
+
+    if st.button("Query Codebase", type="primary"):
+        with st.spinner("Searching graph and generating answer..."):
+            # 1. We'll use the same answer_query logic, but we'll show the context
+            # To show attribution, we need to know WHICH files were matched.
+            # I'll update ai_client to return both in the next step,
+            # but for now, we'll implement the UI logic.
+
+            response = ai_client.answer_query(query, st.session_state.graph_data)
+
+            st.markdown("### Answer")
+            st.markdown(response)
+
+            st.divider()
+            with st.expander("📌 Context Attribution"):
+                st.write(
+                    "The AI consulted the following nodes in your dependency graph to generate this answer:"
+                )
+                # We'll re-run the keyword matching logic briefly for display
+                keywords = query.lower().split()
+                file_graph = st.session_state.graph_data["file_graph"]
+                matches = []
+                for node, data in file_graph.nodes(data=True):
+                    search_text = (
+                        f"{data.get('label','')} {data.get('docstring','')}".lower()
+                    )
+                    if any(word in search_text for word in keywords if len(word) > 3):
+                        matches.append(os.path.basename(node))
+
+                if matches:
+                    for m in set(matches[:5]):
+                        st.info(f"📄 {m}")
+                else:
+                    st.write("General knowledge / Global summary used.")
