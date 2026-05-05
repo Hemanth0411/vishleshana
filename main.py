@@ -7,7 +7,7 @@ Orchestrates the entire pipeline from ingestion to AI analysis.
 import streamlit as st
 import os
 import pandas as pd
-from codelens import ingestion, parser, graph_builder, metrics, analyzer, visualizer
+from codelens import ingestion, parser, graph_builder, metrics, analyzer, visualizer, ai_client
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -183,7 +183,24 @@ with tab3:
 
 with tab4:
     st.header("Recommended Reading Order")
-    st.info("AI mentorship path will appear here.")
+    if not st.session_state.analysis_results:
+        st.info("Perform an analysis to see the recommended learning path.")
+    else:
+        order = st.session_state.analysis_results["reading_order"]
+        
+        st.subheader("🚶 Step-by-Step Path")
+        # Display the file list with arrows
+        path_str = " → ".join([os.path.basename(f) for f in order])
+        st.write(path_str)
+        
+        st.divider()
+        
+        st.subheader("💡 AI Mentor Explanation")
+        with st.spinner("Asking AI for explanation..."):
+            # We'll use the cached explanation if we implement that later, 
+            # for now, we'll just call it directly.
+            explanation = ai_client.explain_reading_order(order)
+            st.markdown(explanation)
 
 with tab5:
     st.header("Chat with your Code")
