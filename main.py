@@ -6,7 +6,7 @@ Orchestrates the entire pipeline from ingestion to AI analysis.
 
 import streamlit as st
 import os
-from codelens import ingestion, parser, graph_builder, metrics, analyzer
+from codelens import ingestion, parser, graph_builder, metrics, analyzer, visualizer
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -17,7 +17,8 @@ st.set_page_config(
 )
 
 # --- CUSTOM CSS (Aesthetics) ---
-st.markdown("""
+st.markdown(
+    """
     <style>
     .main {
         background-color: #0e1117;
@@ -35,7 +36,9 @@ st.markdown("""
         padding-bottom: 10px;
     }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
 
 # --- SESSION STATE INITIALIZATION ---
 if "graph_data" not in st.session_state:
@@ -50,35 +53,43 @@ with st.sidebar:
     st.title("🔍 Vishleshana")
     st.caption("Graph-Aware Code Analysis")
     st.divider()
-    
-    repo_source = st.text_input("GitHub URL or Local Path", placeholder="https://github.com/...")
-    analyze_btn = st.button("Analyze Codebase", type="primary", use_container_width=True)
-    
+
+    repo_source = st.text_input(
+        "GitHub URL or Local Path", placeholder="https://github.com/..."
+    )
+    analyze_btn = st.button(
+        "Analyze Codebase", type="primary", use_container_width=True
+    )
+
     if analyze_btn and repo_source:
         try:
             with st.status("Analyzing codebase...", expanded=True) as status:
                 st.write("📥 Ingesting source...")
                 file_paths = ingestion.ingest(repo_source)
-                
+
                 st.write(f"🔍 Parsing {len(file_paths)} files...")
                 parsed_data = parser.parse_files(file_paths)
-                
+
                 st.write("🕸️ Building dependency graphs...")
                 graph_data = graph_builder.build_graphs(parsed_data)
-                
+
                 st.write("📊 Computing complexity metrics...")
-                graph_data["file_graph"] = metrics.compute_metrics(file_paths, graph_data["file_graph"])
-                
+                graph_data["file_graph"] = metrics.compute_metrics(
+                    file_paths, graph_data["file_graph"]
+                )
+
                 st.write("🧠 Performing structural analysis...")
                 analysis_results = analyzer.analyze(graph_data["file_graph"])
-                
+
                 st.session_state.graph_data = graph_data
                 st.session_state.analysis_results = analysis_results
-                status.update(label="Analysis Complete!", state="complete", expanded=False)
+                status.update(
+                    label="Analysis Complete!", state="complete", expanded=False
+                )
                 st.rerun()
         except Exception as e:
             st.error(f"Analysis failed: {e}")
-    
+
     st.divider()
     if st.button("Clear Cache", use_container_width=True):
         st.session_state.graph_data = None
@@ -89,13 +100,15 @@ with st.sidebar:
 # --- MAIN UI ---
 st.title("Code Lens")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Overview", 
-    "🕸️ Dependency Graph", 
-    "📈 Complexity", 
-    "📚 Reading Order", 
-    "🤖 AI Chat"
-])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    [
+        "📊 Overview",
+        "🕸️ Dependency Graph",
+        "📈 Complexity",
+        "📚 Reading Order",
+        "🤖 AI Chat",
+    ]
+)
 
 with tab1:
     st.header("Project Overview")
@@ -103,23 +116,25 @@ with tab1:
         st.info("Enter a repository source in the sidebar to begin analysis.")
     else:
         res = st.session_state.analysis_results
-        
+
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Total Files", len(st.session_state.graph_data["file_graph"].nodes))
+            st.metric(
+                "Total Files", len(st.session_state.graph_data["file_graph"].nodes)
+            )
         with col2:
             st.metric("Entry Points", len(res["entry_points"]))
         with col3:
             st.metric("Detected Cycles", "Yes" if res["has_cycles"] else "None")
 
         st.divider()
-        
+
         c1, c2 = st.columns(2)
         with c1:
             st.subheader("🚀 Entry Points")
             for ep in res["entry_points"]:
                 st.code(os.path.basename(ep))
-        
+
         with c2:
             st.subheader("💎 Critical Modules")
             for cm in res["critical_modules"]:
@@ -127,7 +142,16 @@ with tab1:
 
 with tab2:
     st.header("System Architecture")
-    st.info("Visualization will appear here.")
+    if not st.session_state.graph_data:
+        st.info("Perform an analysis to view the dependency graph.")
+    else:
+        # Render the interactive Pyvis graph
+        html_str = visualizer.render_graph(st.session_state.graph_data["file_graph"])
+
+        # Use a container to handle the height properly
+        st.components.v1.html(html_str, height=650, scrolling=True)
+
+        st.caption("Tip: You can zoom, drag nodes, and hover for details.")
 
 with tab3:
     st.header("Code Complexity")
