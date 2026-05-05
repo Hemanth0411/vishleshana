@@ -6,6 +6,7 @@ Orchestrates the entire pipeline from ingestion to AI analysis.
 
 import streamlit as st
 import os
+import pandas as pd
 from codelens import ingestion, parser, graph_builder, metrics, analyzer, visualizer
 
 # --- PAGE CONFIG ---
@@ -155,7 +156,30 @@ with tab2:
 
 with tab3:
     st.header("Code Complexity")
-    st.info("Complexity metrics will appear here.")
+    if not st.session_state.graph_data:
+        st.info("Perform an analysis to view complexity metrics.")
+    else:
+        # Extract data for the table
+        complexity_data = []
+        for node, data in st.session_state.graph_data["file_graph"].nodes(data=True):
+            complexity_data.append({
+                "File": os.path.basename(node),
+                "Avg Complexity": data.get("avg_complexity", 0),
+                "Max Complexity": data.get("max_complexity", 0),
+                "Rank": data.get("complexity_rank", "A"),
+                "Flagged Functions": ", ".join(data.get("flagged_functions", [])) or "None"
+            })
+        
+        df = pd.DataFrame(complexity_data)
+        
+        # Display as a sortable table
+        st.dataframe(
+            df.sort_values(by="Max Complexity", ascending=False),
+            use_container_width=True,
+            hide_index=True
+        )
+        
+        st.info("💡 Ranks C, D, E, and F indicate high complexity that may require refactoring.")
 
 with tab4:
     st.header("Recommended Reading Order")
