@@ -6,7 +6,7 @@ Orchestrates the entire pipeline from ingestion to AI analysis.
 
 import streamlit as st
 import os
-from codelens import ingestion, parser, graph_builder
+from codelens import ingestion, parser, graph_builder, metrics, analyzer
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -66,7 +66,14 @@ with st.sidebar:
                 st.write("🕸️ Building dependency graphs...")
                 graph_data = graph_builder.build_graphs(parsed_data)
                 
+                st.write("📊 Computing complexity metrics...")
+                graph_data["file_graph"] = metrics.compute_metrics(file_paths, graph_data["file_graph"])
+                
+                st.write("🧠 Performing structural analysis...")
+                analysis_results = analyzer.analyze(graph_data["file_graph"])
+                
                 st.session_state.graph_data = graph_data
+                st.session_state.analysis_results = analysis_results
                 status.update(label="Analysis Complete!", state="complete", expanded=False)
                 st.rerun()
         except Exception as e:
@@ -95,7 +102,28 @@ with tab1:
     if not st.session_state.analysis_results:
         st.info("Enter a repository source in the sidebar to begin analysis.")
     else:
-        st.success("Analysis Complete!")
+        res = st.session_state.analysis_results
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Files", len(st.session_state.graph_data["file_graph"].nodes))
+        with col2:
+            st.metric("Entry Points", len(res["entry_points"]))
+        with col3:
+            st.metric("Detected Cycles", "Yes" if res["has_cycles"] else "None")
+
+        st.divider()
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            st.subheader("🚀 Entry Points")
+            for ep in res["entry_points"]:
+                st.code(os.path.basename(ep))
+        
+        with c2:
+            st.subheader("💎 Critical Modules")
+            for cm in res["critical_modules"]:
+                st.code(os.path.basename(cm))
 
 with tab2:
     st.header("System Architecture")
