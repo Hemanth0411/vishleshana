@@ -6,6 +6,7 @@ Orchestrates the entire pipeline from ingestion to AI analysis.
 
 import streamlit as st
 import os
+from codelens import ingestion, parser, graph_builder
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -52,6 +53,24 @@ with st.sidebar:
     
     repo_source = st.text_input("GitHub URL or Local Path", placeholder="https://github.com/...")
     analyze_btn = st.button("Analyze Codebase", type="primary", use_container_width=True)
+    
+    if analyze_btn and repo_source:
+        try:
+            with st.status("Analyzing codebase...", expanded=True) as status:
+                st.write("📥 Ingesting source...")
+                file_paths = ingestion.ingest(repo_source)
+                
+                st.write(f"🔍 Parsing {len(file_paths)} files...")
+                parsed_data = parser.parse_files(file_paths)
+                
+                st.write("🕸️ Building dependency graphs...")
+                graph_data = graph_builder.build_graphs(parsed_data)
+                
+                st.session_state.graph_data = graph_data
+                status.update(label="Analysis Complete!", state="complete", expanded=False)
+                st.rerun()
+        except Exception as e:
+            st.error(f"Analysis failed: {e}")
     
     st.divider()
     if st.button("Clear Cache", use_container_width=True):
