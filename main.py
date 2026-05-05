@@ -164,8 +164,8 @@ with tab3:
         for node, data in st.session_state.graph_data["file_graph"].nodes(data=True):
             complexity_data.append({
                 "File": os.path.basename(node),
-                "Avg Complexity": data.get("avg_complexity", 0),
-                "Max Complexity": data.get("max_complexity", 0),
+                "Avg Complexity": data.get("complexity_avg", 0),
+                "Max Complexity": data.get("complexity_max", 0),
                 "Rank": data.get("complexity_rank", "A"),
                 "Flagged Functions": ", ".join(data.get("flagged_functions", [])) or "None"
             })
