@@ -1,17 +1,46 @@
-# Attribution
+# Open Source Attribution
 
-This project relies on the following open-source software:
+Vishleshana (CodeLens) stands on the shoulders of these incredible open-source projects:
 
-| Package | Version | License | URL |
-|---------|---------|---------|-----|
-| gitpython | >=3.1.40 | BSD-3-Clause | https://github.com/gitpython-developers/GitPython |
-| networkx | >=3.2 | BSD-3-Clause | https://github.com/networkx/networkx |
-| radon | >=6.0.1 | MIT | https://github.com/rubik/radon |
-| pyvis | >=0.3.2 | BSD-3-Clause | https://github.com/WestHealth/pyvis |
-| pyan3 | >=1.1.1 | MIT | https://github.com/technologicat/pyan |
-| streamlit | >=1.32.0 | Apache-2.0 | https://streamlit.io/ |
-| openai | >=1.0.0 | Apache-2.0 | https://github.com/openai/openai-python |
-| python-dotenv | >=1.0.0 | BSD-3-Clause | https://github.com/theskumar/python-dotenv |
+| Package | Version | License |
+| :--- | :--- | :--- |
+| GitPython | 3.1.49 | BSD-3-Clause |
+| networkx | 3.6.1 | Unknown |
+| openai | 2.33.0 | Apache-2.0 |
+| pandas | 3.0.2 | BSD 3-Clause License
 
----
-Generated automatically via `pip-licenses`.
+ Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc. and PyData Development Team
+ All rights reserved.
+
+ Copyright (c) 2011-2026, Open source contributors.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+ * Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ |
+| pytest | 9.0.3 | Unknown |
+| python-dotenv | 1.2.2 | BSD-3-Clause |
+| pyvis | 0.3.2 | BSD |
+| radon | 6.0.1 | MIT |
+| streamlit | 1.57.0 | Unknown |
