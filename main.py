@@ -66,7 +66,14 @@ with st.sidebar:
 # --- MAIN UI ---
 st.title("Code Lens")
 tabs = st.tabs(
-    ["📊 Overview", "🕸️ Graph", "📈 Complexity", "📚 Reading Order", "🤖 AI Chat", "🔍 Query"]
+    [
+        "📊 Overview",
+        "🕸️ Graph",
+        "📈 Complexity",
+        "📚 Reading Order",
+        "🤖 AI Chat",
+        "🔍 Query",
+    ]
 )
 
 with tabs[0]:
