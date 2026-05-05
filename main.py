@@ -24,9 +24,14 @@ for key in ["graph_data", "analysis_results", "chat_history"]:
 # --- SIDEBAR ---
 with st.sidebar:
     st.title("🔍 Vishleshana")
-    repo_source = st.text_input("GitHub URL or Local Path", placeholder="https://github.com/...")
-    
-    if st.button("Analyze Codebase", type="primary", use_container_width=True) and repo_source:
+    repo_source = st.text_input(
+        "GitHub URL or Local Path", placeholder="https://github.com/..."
+    )
+
+    if (
+        st.button("Analyze Codebase", type="primary", use_container_width=True)
+        and repo_source
+    ):
         try:
             with st.status("Analyzing codebase...", expanded=True) as status:
                 st.write("📥 Ingesting...")
@@ -48,16 +53,31 @@ with st.sidebar:
             st.error(f"Analysis failed: {e}")
 
     if st.button("Clear Cache", use_container_width=True):
-        for key in ["graph_data", "analysis_results", "chat_history", "reading_order_explanation"]:
-            if key in st.session_state: del st.session_state[key]
+        for key in [
+            "graph_data",
+            "analysis_results",
+            "chat_history",
+            "reading_order_explanation",
+        ]:
+            if key in st.session_state:
+                del st.session_state[key]
         st.rerun()
 
 # --- MAIN UI ---
 st.title("Code Lens")
-tabs = st.tabs(["📊 Overview", "🕸️ Graph", "📈 Complexity", "📚 Reading Order", "🤖 AI Chat"])
+tabs = st.tabs(
+    ["📊 Overview", "🕸️ Graph", "📈 Complexity", "📚 Reading Order", "🤖 AI Chat", "🔍 Query"]
+)
 
-with tabs[0]: ui_tabs.render_overview()
-with tabs[1]: ui_tabs.render_graph()
-with tabs[2]: ui_tabs.render_complexity()
-with tabs[3]: ui_tabs.render_reading_order()
-with tabs[4]: ui_tabs.render_chat()
+with tabs[0]:
+    ui_tabs.render_overview()
+with tabs[1]:
+    ui_tabs.render_graph()
+with tabs[2]:
+    ui_tabs.render_complexity()
+with tabs[3]:
+    ui_tabs.render_reading_order()
+with tabs[4]:
+    ui_tabs.render_chat()
+with tabs[5]:
+    ui_tabs.render_query()
