@@ -127,3 +127,64 @@ EXPLANATION:
         return response.choices[0].message.content
     except Exception as e:
         return f"Error explaining reading order: {e}"
+
+
+def answer_query(query: str, graph_data: dict) -> str:
+    """
+    Finds relevant files in the graph based on the query and asks NIM for an answer.
+
+    Args:
+        query: User's question about the code.
+        graph_data: Dictionary containing 'file_graph' and 'call_graph'.
+    Returns:
+        AI-generated answer based on local context.
+    """
+    file_graph = graph_data["file_graph"]
+    keywords = query.lower().split()
+
+    # 1. Search graph for relevant nodes
+    relevant_context = []
+    for node, data in file_graph.nodes(data=True):
+        # Match against filename, docstring, or function names
+        search_text = (
+            f"{data.get('label', '')} {data.get('docstring', '')} "
+            f"{' '.join([f['name'] for f in data.get('functions', [])])}"
+        ).lower()
+
+        if any(word in search_text for word in keywords if len(word) > 3):
+            ctx = f"--- File: {data.get('label')} ---\n"
+            ctx += f"Path: {node}\n"
+            ctx += f"Docstring: {data.get('docstring') or 'N/A'}\n"
+            ctx += f"Functions: {', '.join([f['name'] for f in data.get('functions', [])])}\n"
+            relevant_context.append(ctx)
+
+    # Limit context to top 5 matches to stay within token limits
+    context_str = "\n".join(relevant_context[:5])
+
+    if not context_str:
+        context_str = "No specific files matched the keywords in your query."
+
+    # 2. Construct the prompt
+    prompt = f"""
+You are a helpful assistant analyzing a Python codebase.
+The user has a specific question. Use the provided file metadata to answer it.
+If the answer isn't in the context, say you don't know based on the current analysis.
+
+USER QUERY: {query}
+
+RELEVANT CODE CONTEXT:
+{context_str}
+
+ANSWER:
+"""
+
+    try:
+        client = _get_client()
+        response = client.chat.completions.create(
+            model=config.NIM_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=config.NIM_MAX_TOKENS,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error answering query: {e}"
