@@ -1,6 +1,6 @@
 # Open Source Attribution
 
-Vishleshana (CodeLens) stands on the shoulders of these incredible open-source projects:
+Vishleshana stands on the shoulders of these incredible open-source projects:
 
 | Package | Version | License |
 | :--- | :--- | :--- |

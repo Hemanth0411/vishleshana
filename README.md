@@ -1,4 +1,5 @@
-# 🔍 Vishleshana (CodeLens)
+# 🔍 Vishleshana (विश्लेषण)
+> **Vishleshana (विश्लेषण)** — The Sanskrit word for Analysis.
 
 **Graph-Aware AI Codebase Analysis**
 

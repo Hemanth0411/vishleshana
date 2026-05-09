@@ -14,49 +14,91 @@ from pyvis.network import Network
 
 def render_graph(file_graph: nx.DiGraph) -> str:
     """
-    Converts a networkx graph into an interactive Pyvis HTML visualization.
-
-    Returns:
-        A string containing the full HTML/JS for the visualization.
+    Renders a NetworkX file graph into an interactive HTML string using Pyvis.
     """
-    # Initialize Pyvis Network
-    # notebook=False because we want a standalone HTML string
-    # directed=True for our dependency arrows
-    nt = Network(
-        height="600px",
-        width="100%",
-        directed=True,
-        bgcolor="#ffffff",
-        font_color="#2c3e50",
-    )
-
-    # Assign colors
+    nt = Network(height="650px", width="100%", bgcolor="#0e1117", font_color="white", directed=True)
+    
     colors = _assign_node_colors(file_graph)
+    # Get current workspace to calculate relative paths
+    cwd = os.getcwd()
 
-    # Add Nodes
     for node, data in file_graph.nodes(data=True):
         label = data.get("label", os.path.basename(node))
+        # Use relative path for tooltip
+        rel_path = os.path.relpath(node, cwd) if os.path.isabs(node) else node
+        nt.add_node(node, label=label, title=f"/{rel_path}", color=colors.get(node, "#2ecc71"))
 
-        # Build tooltip (title)
-        functions = [f["name"] for f in data.get("functions", [])]
-        title = f"File: {label}\n"
-        title += f"Docstring: {data.get('docstring', 'N/A')}\n"
-        title += (
-            f"Functions: {', '.join(functions[:5])}{'...' if len(functions)>5 else ''}"
-        )
-
-        nt.add_node(
-            node, label=label, color=colors.get(node), title=title, borderWidth=2
-        )
-
-    # Add Edges
     for source, target in file_graph.edges():
-        nt.add_edge(source, target, color="#bdc3c7")
+        nt.add_edge(source, target, color="#5d6d7e")
 
-    # Disable physics for large graphs to prevent "jumping"
-    nt.toggle_physics(True)
+    # Force instant centering via aggressive stabilization
+    nt.options = {
+        "physics": {
+            "forceAtlas2Based": {
+                "gravitationalConstant": -50,
+                "centralGravity": 0.01,
+                "springLength": 100,
+                "springConstant": 0.08
+            },
+            "solver": "forceAtlas2Based",
+            "stabilization": {
+                "enabled": True,
+                "iterations": 2000,  # Increase iterations for instant fit
+                "fit": True          # Auto-fit to screen after stabilization
+            }
+        },
+        "interaction": {
+            "navigationButtons": True,
+            "hover": True
+        }
+    }
+    
+    return nt.generate_html()
 
-    # Generate the HTML string
+
+def render_reading_path(reading_order: list[str]) -> str:
+    """
+    Creates an interactive flowchart for the topological reading order.
+    """
+    from pyvis.network import Network
+    
+    nt = Network(height="600px", width="100%", bgcolor="#0e1117", font_color="white", directed=True)
+    cwd = os.getcwd()
+
+    for i, path in enumerate(reading_order):
+        name = os.path.basename(path)
+        # Calculate relative path for tooltip
+        rel_path = os.path.relpath(path, cwd) if os.path.isabs(path) else path
+        nt.add_node(path, label=f"{i+1}. {name}", title=f"/{rel_path}", shape="box", color="#3498db")
+        if i > 0:
+            nt.add_edge(reading_order[i-1], path, color="#5d6d7e", width=2)
+
+    # Clean hierarchical layout with native tools and instant centering
+    nt.options = {
+        "layout": {
+            "hierarchical": {
+                "enabled": True,
+                "direction": "UD",
+                "sortMethod": "directed",
+                "nodeSpacing": 200,
+                "levelSeparation": 150
+            }
+        },
+        "interaction": {
+            "navigationButtons": True,
+            "hover": True,
+            "keyboard": True
+        },
+        "physics": {
+            "enabled": True,  # Temporarily enable for stabilization
+            "stabilization": {
+                "enabled": True,
+                "iterations": 1000,
+                "fit": True
+            }
+        }
+    }
+    
     return nt.generate_html()
 
 

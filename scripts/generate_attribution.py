@@ -43,7 +43,7 @@ def generate():
 
     # Write the file
     content = "# Open Source Attribution\n\n"
-    content += "Vishleshana (CodeLens) stands on the shoulders of these incredible open-source projects:\n\n"
+    content += "Vishleshana stands on the shoulders of these incredible open-source projects:\n\n"
     content += "| Package | Version | License |\n"
     content += "| :--- | :--- | :--- |\n"
     

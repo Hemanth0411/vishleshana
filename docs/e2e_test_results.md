@@ -1,6 +1,6 @@
 # 🧪 End-to-End Test Results
 
-We validated Vishleshana (CodeLens) against three major open-source Python repositories. Below are the architectural insights and metrics captured.
+We validated Vishleshana against three major open-source Python repositories. Below are the architectural insights and metrics captured.
 
 ## 1. [PSF/Requests](https://github.com/psf/requests)
 - **Status**: ✅ Success
