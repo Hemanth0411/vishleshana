@@ -38,6 +38,27 @@ def analyze(file_graph: nx.DiGraph) -> dict:
     }
 
 
+def get_path_from_entry(graph: nx.DiGraph, entry_point: str) -> list[str]:
+    """
+    Extracts the topological reading order for a specific entry point flow.
+    """
+    if entry_point not in graph:
+        return []
+
+    # Find all nodes reachable from this entry point (downstream dependencies)
+    # We use reverse() logic because we want foundational files at the top
+    reachable = nx.descendants(graph, entry_point) | {entry_point}
+    subgraph = graph.subgraph(reachable)
+
+    try:
+        order = list(nx.topological_sort(subgraph))
+        order.reverse()
+        return order
+    except nx.NetworkXUnfeasible:
+        # Fallback if subgraph has a cycle
+        return list(subgraph.nodes)
+
+
 def _detect_entry_points(file_graph: nx.DiGraph) -> list[str]:
     """
     Identifies entry points in the codebase.

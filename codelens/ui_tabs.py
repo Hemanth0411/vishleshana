@@ -81,8 +81,28 @@ def render_reading_order():
         return
 
     order = st.session_state.analysis_results["reading_order"]
+    entry_points = st.session_state.analysis_results["entry_points"]
+    
     st.subheader("🚶 Step-by-Step Path")
-    st.write(" → ".join([os.path.basename(f) for f in order]))
+    
+    # Selection for Multiple Flows
+    flow_options = ["Global Project Order"] + [os.path.basename(ep) for ep in entry_points]
+    selected_flow = st.selectbox("Select Project Flow", flow_options)
+    
+    # Calculate the order for the selected flow
+    if selected_flow == "Global Project Order":
+        display_order = order
+    else:
+        # Map basename back to full path
+        full_path = next(ep for ep in entry_points if os.path.basename(ep) == selected_flow)
+        from codelens import analyzer
+        display_order = analyzer.get_path_from_entry(st.session_state.graph_data["file_graph"], full_path)
+
+    # Use an interactive flowchart (minimized by default)
+    with st.expander("Explore Interactive Flowchart", expanded=False):
+        html_str = visualizer.render_reading_path(display_order)
+        st.components.v1.html(html_str, height=650, scrolling=True)
+    
     st.divider()
     st.subheader("💡 AI Mentor Explanation")
 
@@ -98,7 +118,7 @@ def render_reading_order():
 def render_chat():
     st.header("Chat with your Code")
     if not st.session_state.graph_data:
-        st.info("Analysis required for chat.")
+        st.info("👋 Welcome! Please enter a repository path in the sidebar and click 'Analyze Project' to enable AI Chat.")
         return
 
     # Display chat history
@@ -121,7 +141,7 @@ def render_chat():
 def render_query():
     st.header("Semantic Query")
     if not st.session_state.graph_data:
-        st.info("Analysis required for queries.")
+        st.info("🔍 Ready to search? Run an analysis in the sidebar to start querying your codebase logic.")
         return
 
     query = st.text_input(
@@ -131,34 +151,38 @@ def render_query():
 
     if st.button("Query Codebase", type="primary"):
         with st.spinner("Searching graph and generating answer..."):
-            # 1. We'll use the same answer_query logic, but we'll show the context
-            # To show attribution, we need to know WHICH files were matched.
-            # I'll update ai_client to return both in the next step,
-            # but for now, we'll implement the UI logic.
-
             response = ai_client.answer_query(query, st.session_state.graph_data)
 
             st.markdown("### Answer")
             st.markdown(response)
 
+            # Check if README was found for debugging
+            has_readme = any("readme" in os.path.basename(n).lower() for n in st.session_state.graph_data["file_graph"].nodes)
+            if has_readme:
+                st.success("✅ Analysis grounded in Project README.")
+            else:
+                st.warning("⚠️ No README found in analysis. AI is using structural inference.")
+
             st.divider()
             with st.expander("📌 Context Attribution"):
-                st.write(
-                    "The AI consulted the following nodes in your dependency graph to generate this answer:"
-                )
-                # We'll re-run the keyword matching logic briefly for display
+                # --- CONTEXT ATTRIBUTION ENGINE ---
                 keywords = query.lower().split()
                 file_graph = st.session_state.graph_data["file_graph"]
                 matches = []
+                
+                # Fuzzy match across labels, docstrings, and function names
                 for node, data in file_graph.nodes(data=True):
-                    search_text = (
-                        f"{data.get('label','')} {data.get('docstring','')}".lower()
-                    )
-                    if any(word in search_text for word in keywords if len(word) > 3):
-                        matches.append(os.path.basename(node))
+                    functions_str = " ".join([f["name"] for f in data.get("functions", [])])
+                    search_blob = f"{data.get('label', '')} {data.get('docstring', '')} {functions_str}".lower()
+                    
+                    # If any significant keyword (>=3 chars) is in the metadata
+                    if any(word in search_blob for word in keywords if len(word) >= 3):
+                        matches.append(node)
 
+                # Display attribution
                 if matches:
-                    for m in set(matches[:5]):
-                        st.info(f"📄 {m}")
+                    st.caption("The AI consulted the following files to generate this answer:")
+                    for m in set(matches):
+                        st.markdown(f"- `{os.path.basename(m)}`")
                 else:
-                    st.write("General knowledge / Global summary used.")
+                    st.caption("General knowledge / Global summary used.")

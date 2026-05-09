@@ -1,10 +1,6 @@
 """
-ingestion.py — Repository ingestion for CodeLens.
-
-Accepts a GitHub URL or local directory path.
-Clones (if remote) and returns filtered list of .py file paths.
-
-Dependencies: gitpython
+ingestion.py — Codebase scanning and remote repository ingestion.
+Supports local directories and GitHub clones.
 """
 
 import os
@@ -16,12 +12,12 @@ from codelens import config
 def ingest(source: str) -> list[str]:
     """
     Accepts a GitHub URL or local directory path.
-    Clones (if remote) and returns a filtered list of .py file paths.
+    Clones (if remote) and returns a filtered list of .py and .md file paths.
 
     Args:
         source: GitHub URL (https://github.com/...) or absolute local path.
     Returns:
-        List of absolute paths to .py files, filtered per config.
+        List of absolute paths to valid files, filtered per config.
     Raises:
         ValueError: If source is invalid or path does not exist.
         RuntimeError: If cloning fails.
@@ -47,13 +43,6 @@ def ingest(source: str) -> list[str]:
 def _clone_repo(url: str) -> str:
     """
     Clones a remote GitHub repository to a timestamped subdirectory in TEMP_DIR.
-
-    Args:
-        url: The GitHub repository URL.
-    Returns:
-        The absolute path to the locally cloned repository.
-    Raises:
-        RuntimeError: If cloning fails.
     """
     # Create a unique folder name using the current timestamp
     timestamp = int(time.time())
@@ -71,37 +60,30 @@ def _clone_repo(url: str) -> str:
         raise RuntimeError(f"Failed to clone repository: {str(e)}")
 
 
-def _discover_files(root: str) -> list[str]:
+def _discover_files(root_path: str) -> list[str]:
     """
-    Walks the directory and returns absolute paths to all .py files,
-    excluding those in IGNORED_DIRS or matching IGNORED_FILES/PREFIXES.
-
-    Args:
-        root: The root directory to scan.
-    Returns:
-        List of absolute paths to filtered .py files.
+    Walks the directory and returns absolute paths to all .py and .md files,
+    excluding those in IGNORED_DIRS or matching IGNORED_FILES.
     """
-    py_files = []
+    valid_files = []
 
-    for dirpath, dirnames, filenames in os.walk(root):
-        # 1. Filter out ignored directories in-place to prevent os.walk from entering them
+    # 1. Walk through the directory
+    for dirpath, dirnames, filenames in os.walk(root_path):
+        # Exclude ignored directories in-place
         dirnames[:] = [d for d in dirnames if d not in config.IGNORED_DIRS]
 
         for filename in filenames:
-            # 2. Check if it's a .py file
-            if not filename.endswith(".py"):
+            # 2. Check extension
+            ext = os.path.splitext(filename)[1].lower()
+            if ext not in [".py", ".md"]:
                 continue
 
-            # 3. Check if file is in IGNORED_FILES
+            # 3. Check ignored files
             if filename in config.IGNORED_FILES:
                 continue
 
-            # 4. Check if file matches IGNORED_PREFIXES
-            if any(filename.startswith(prefix) for prefix in config.IGNORED_PREFIXES):
-                continue
-
-            # 5. Add valid file to list
+            # 4. Add valid file
             full_path = os.path.join(dirpath, filename)
-            py_files.append(os.path.abspath(full_path))
+            valid_files.append(os.path.abspath(full_path))
 
-    return py_files
+    return valid_files

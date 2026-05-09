@@ -23,6 +23,25 @@ def parse_files(file_paths: list[str]) -> dict:
     results = {"files": {}, "call_edges": _build_call_edges(file_paths)}
 
     for path in file_paths:
+        # 1. Handle Markdown files
+        if path.lower().endswith(".md"):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                results["files"][path] = {
+                    "file_path": path,
+                    "label": os.path.basename(path),
+                    "docstring": content[:5000],
+                    "functions": [],
+                    "classes": [],
+                    "imports": [],
+                    "lines": len(content.splitlines()),
+                }
+                continue
+            except Exception as e:
+                print(f"Warning: Failed to parse markdown {path}: {e}")
+
+        # 2. Handle Python files
         try:
             results["files"][path] = _parse_single_file(path)
         except Exception as e:

@@ -1,5 +1,5 @@
 """
-main.py — Streamlit Entry Point for Vishleshana (CodeLens).
+main.py — Streamlit Entry Point for Vishleshana.
 Orchestrates the entire pipeline.
 """
 
@@ -64,7 +64,7 @@ with st.sidebar:
         st.rerun()
 
 # --- MAIN UI ---
-st.title("Code Lens")
+st.title("Vishleshana")
 tabs = st.tabs(
     [
         "📊 Overview",
