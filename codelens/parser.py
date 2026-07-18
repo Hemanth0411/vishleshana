@@ -8,6 +8,7 @@ Dependencies: ast (stdlib), pyan3
 """
 
 import ast
+import os
 import pyan
 
 
@@ -59,12 +60,18 @@ def _build_call_edges(file_paths: list[str]) -> list[tuple[str, str]]:
     Returns:
         List of (caller_name, callee_name) tuples.
     """
+    # pyan only understands Python — exclude .md and other non-.py files,
+    # otherwise a single non-Python file fails the entire batch.
+    py_files = [p for p in file_paths if p.lower().endswith(".py")]
+    if not py_files:
+        return []
+
     try:
         # pyan3 uses its own internal visitor to build the call graph
         # draw_defines=False prevents it from adding 'definition' edges
         # draw_uses=True ensures it captures 'call' edges
         visitor = pyan.create_callgraph(
-            filenames=file_paths, draw_defines=False, draw_uses=True
+            filenames=py_files, draw_defines=False, draw_uses=True
         )
 
         edges = []

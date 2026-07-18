@@ -10,7 +10,14 @@ from codelens import config
 
 def _get_client():
     """Initializes the OpenAI-compatible NIM client."""
-    return OpenAI(base_url=config.NIM_BASE_URL, api_key=config.NIM_API_KEY)
+    # timeout + limited retries so a slow/unreachable endpoint fails fast
+    # instead of hanging the "Asking AI..." spinner indefinitely.
+    return OpenAI(
+        base_url=config.NIM_BASE_URL,
+        api_key=config.NIM_API_KEY,
+        timeout=45.0,
+        max_retries=1,
+    )
 
 
 def generate_summary(graph_data: dict) -> str:

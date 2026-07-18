@@ -69,8 +69,13 @@ def _detect_entry_points(file_graph: nx.DiGraph) -> list[str]:
     Returns:
         List of file paths that are entry points.
     """
-    # Find nodes with 0 incoming edges
-    entry_points = [node for node, degree in file_graph.in_degree() if degree == 0]
+    # Find nodes with 0 incoming edges (code files only; README is not an
+    # execution entry point even though nothing imports it).
+    entry_points = [
+        node
+        for node, degree in file_graph.in_degree()
+        if degree == 0 and node.lower().endswith(".py")
+    ]
 
     # Sort for consistency
     return sorted(entry_points)

@@ -24,6 +24,9 @@ def compute_metrics(file_paths: list[str], file_graph: nx.DiGraph) -> nx.DiGraph
         The graph with added complexity attributes on each node.
     """
     for path in file_paths:
+        # Radon only analyses Python source; skip .md and other non-.py files.
+        if not path.lower().endswith(".py"):
+            continue
         if path not in file_graph.nodes:
             continue
 

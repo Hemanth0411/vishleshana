@@ -78,6 +78,11 @@ def _discover_files(root_path: str) -> list[str]:
             if ext not in [".py", ".md"]:
                 continue
 
+            # Only keep README markdown (used for AI grounding); other .md
+            # files (issue templates, etc.) are noise and pollute the graph.
+            if ext == ".md" and "readme" not in filename.lower():
+                continue
+
             # 3. Check ignored files
             if filename in config.IGNORED_FILES:
                 continue
